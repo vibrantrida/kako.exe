@@ -1,0 +1,7 @@
+{
+  "token": "BOT-USER-TOKEN",
+  "command": {
+    "prefix": "!",
+    "public": [ "catch", "collection"]
+  }
+}

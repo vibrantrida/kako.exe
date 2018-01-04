@@ -1,0 +1,26 @@
+{
+  "name": "japarimon",
+  "version": "0.0.1",
+  "main": "kako.js",
+  "scripts": {
+    "start": "node kako.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onlyrida/japarimon.git"
+  },
+  "author": "onlyrida <pudarida@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/onlyrida/japarimon/issues"
+  },
+  "homepage": "https://github.com/onlyrida/japarimon#readme",
+  "dependencies": {
+    "console-stamp": "^0.2.6",
+    "discord.js": "^11.2.1",
+    "moment": "^2.20.1"
+  },
+  "devDependencies": {
+    "standard": "^10.0.3"
+  }
+}
