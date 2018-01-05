@@ -1,5 +1,6 @@
 {
   "token": "BOT-USER-TOKEN",
+  "channels": [ "channel-a", "channel-b",  "channel-c" ],
   "command": {
     "prefix": "!",
     "public": [ "catch", "collection"]

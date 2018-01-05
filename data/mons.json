@@ -1,0 +1,14 @@
+[
+  {
+    "name": "dummy1",
+    "sprite": "jpm_dummy.png"
+  },
+  {
+    "name": "dummy2",
+    "sprite": "jpm_dummy.png"
+  },
+  {
+    "name": "dummy3",
+    "sprite": "jpm_dummy.png"
+  }
+]
