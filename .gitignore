@@ -1,5 +1,6 @@
 pseudo.txt
 config.json
+*.ase
 
 # Created by https://www.gitignore.io/api/git,node,sublimetext
 
