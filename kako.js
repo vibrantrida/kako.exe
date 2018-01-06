@@ -20,6 +20,15 @@ kako.on('ready', () => {
     Japarimon.update()
   }, 30000) // 30s
 }) // on 'ready'
+
+kako.on('message', (msg) => {
+  if (msg.author.bot) {
+    return
+  }
+  if (msg.channel === Japarimon.channel) {
+    Command.parse(msg)
+  }
+})
 // -------- end - Kako.exe --------
 
 // -------- Japarimon -------------
@@ -35,7 +44,8 @@ Japarimon.chance = 0.05 // 0.05 - 5%
 Japarimon.state = 0 // 0 - explore, 1 - encounter
 Japarimon.tick = 0 // 1 tick is 30s
 Japarimon.flee_tick = 4 // mons will flee after 2m
-Japarimon.local_mons = []
+Japarimon.local_monsdb = []
+Japarimon.local_playersdb = playersdb.slice()
 Japarimon.encountered_mon = -1 // encountered mon
 Japarimon.state_msg = -1 // message object of last state message for later deletion
 Japarimon.shuffle = function (arr) {
@@ -57,6 +67,19 @@ Japarimon.encounterMon = function () {
     })
   return
 } // encounterMon
+Japarimon.saveData = function () {
+  if (Japarimon.local_playersdb.length > 0) {
+    console.log('saving local_playersdb to storage as players.json')
+    fs.writeFile('./data/players.json', JSON.stringify(Japarimon.local_playersdb), 'utf8', (err) => {
+        if (err) {
+          return console.error(`failed saving players data: ${err}`)
+        }
+        playersdb = require('./data/players.json')
+        console.info('successfully saved players data to \'data/players.json\'')
+        Japarimon.channel.send(`:floppy_disk: Data was successfully saved to  Japari Library.`)
+      })
+  }
+}
 Japarimon.pickChannel = function () {
   console.log('Picking a random channel')
   // doing this twice because Math.random() uses the same seed on start-up
@@ -68,20 +91,20 @@ Japarimon.pickChannel = function () {
 Japarimon.explore = function () {
   console.log('Throw dice!')
   if (Math.random() < Japarimon.chance) {
-    if (Japarimon.local_mons.length > 0) {
-      console.log('local_mons is not empty, popping a mon to encountered_mon')
-      Japarimon.encountered_mon = Japarimon.local_mons.pop()
+    if (Japarimon.local_monsdb.length > 0) {
+      console.log('local_monsdb is not empty, popping a mon to encountered_mon')
+      Japarimon.encountered_mon = Japarimon.local_monsdb.pop()
       console.log(`\n${JSON.stringify(Japarimon.encountered_mon, null, 4)}`)
     } else {
-      console.log('local_mons is empty, copying monsdb to local_mons')
-      Japarimon.local_mons = monsdb.slice()
+      console.log('local_monsdb is empty, copying monsdb to local_monsdb')
+      Japarimon.local_monsdb = monsdb.slice()
 
-      console.log('shuffling local_mons... Fisher-Yates style!')
-      Japarimon.shuffle(Japarimon.local_mons)
-      Japarimon.shuffle(Japarimon.local_mons)
+      console.log('shuffling local_monsdb... Fisher-Yates style!')
+      Japarimon.shuffle(Japarimon.local_monsdb)
+      Japarimon.shuffle(Japarimon.local_monsdb)
 
-      console.log('local_mons has been shuffle, popping a mon to encountered_mon')
-      Japarimon.encountered_mon = Japarimon.local_mons.pop()
+      console.log('local_monsdb has been shuffle, popping a mon to encountered_mon')
+      Japarimon.encountered_mon = Japarimon.local_monsdb.pop()
     }
   } else {
     console.log('no dice')
@@ -114,8 +137,12 @@ Japarimon.update = function () {
           Japarimon.state_msg.delete()
           Japarimon.state_msg = -1
         }
+        let mon_name = Japarimon.encountered_mon.name
         Japarimon.encountered_mon = -1;
         console.log('encountered_mon has fled, encountered_mon is now equal to -1')
+
+        Japarimon.channel.send(`:dash: The remaining ${mon_name} fled. Congrats to those who caught one!`)
+        Japarimon.saveData()
         console.log('resetting tick to 0, switching state to \'Explore\'')
         Japarimon.tick = 0;
         Japarimon.state = 0;
@@ -128,6 +155,63 @@ Japarimon.update = function () {
   }
 } // update
 // -------- end - Japarimon -------
+
+// -------- helpers ---------------
+let Command = {}
+Command.parse = function (msg) {
+  let str = msg.content
+  if (str.startsWith(config.prefix)) {
+    console.log('message starts with a command prefix, checking validity')
+    if (str === config.prefix + 'catch' ||
+        str === config.prefix + 'collection') {
+      console.log('message is a valid command, executing')
+      Command.execute(msg)
+    } else {
+      console.log('message is not a valid command')
+    }
+  }
+}
+Command.execute = function (msg) {
+  switch (msg.content) {
+    case config.prefix + 'catch':
+      console.log('executing \'catch\' command')
+      console.log('creating object \'p\'')
+      let p = {}
+      p.id = msg.author.id
+      if (Japarimon.encountered_mon !== -1) {
+        console.log('checking if player exists in local_playersdb')
+        if (Japarimon.local_playersdb.find(o => o.id === p.id)) {
+          console.info('player exists in local_playersdb')
+          p = Japarimon.local_playersdb[Japarimon.local_playersdb.indexOf(Japarimon.local_playersdb.find(o => o.id === msg.author.id))]
+          console.log(JSON.stringify(p, null, 4))
+          console.log('checking if player already have encountered_mon')
+          if (!p.mons.includes(monsdb.indexOf(Japarimon.encountered_mon))) {
+            console.info('player doesn\'t have this mon yet')
+            console.log('pushing encountered_mon to player\'s collection')
+            p.mons.push(monsdb.indexOf(Japarimon.encountered_mon))
+            Japarimon.channel.send(`:gift: Got it! **${msg.member.displayName}** caught a **${Japarimon.encountered_mon.name}**!`)
+            console.log('updating player\'s data in local_playersdb')
+            Japarimon.local_playersdb[Japarimon.local_playersdb.find(o => o.id === msg.author.id)] = p
+            console.info('player\'s data saved!\n', JSON.stringify(Japarimon.local_playersdb, null, 4))
+          } else {
+            Japarimon.channel.send(`:exclamation: You already have a **${Japarimon.encountered_mon.name}** **${msg.member.displayName}**, give chance to others!`)
+          }
+        } else {
+          console.info(`player with ID ${p.id} doesn\'t exists in local_playersdb`)
+          console.log('pushing encountered_mon to player\'s collection')
+          p.mons = []
+          p.mons.push(monsdb.indexOf(Japarimon.encountered_mon))
+          Japarimon.channel.send(`:gift: Got it! **${msg.member.displayName}** caught a **${Japarimon.encountered_mon.name}**!`)
+          console.log('adding new player to local_playersdb')
+          Japarimon.local_playersdb.push(p)
+          console.info('player\'s data saved!\n', JSON.stringify(Japarimon.local_playersdb, null, 4))
+        }
+      } else {
+        console.log('there is no mon to catch')
+      }
+      break;
+  }
+}
 
 // -------- error handlers --------
 process.on('unhandledRejection', (reason) => {
