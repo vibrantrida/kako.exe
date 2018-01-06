@@ -25,9 +25,8 @@ kako.on('message', (msg) => {
   if (msg.author.bot) {
     return
   }
-  if (msg.channel === Japarimon.channel) {
-    Command.parse(msg)
-  }
+  
+  Command.parse(msg)
 })
 // -------- end - Kako.exe --------
 
@@ -163,7 +162,7 @@ Command.parse = function (msg) {
   if (str.startsWith(config.prefix)) {
     console.log('message starts with a command prefix, checking validity')
     if (str === config.prefix + 'catch' ||
-        str === config.prefix + 'collection') {
+        str.startsWith(config.prefix + 'collection')) {
       console.log('message is a valid command, executing')
       Command.execute(msg)
     } else {
@@ -172,17 +171,17 @@ Command.parse = function (msg) {
   }
 }
 Command.execute = function (msg) {
-  switch (msg.content) {
+  let p = {}
+  switch (msg.content.split(/\s+/)[0]) {
     case config.prefix + 'catch':
+      if (msg.channel === Japarimon.channel) {
       console.log('executing \'catch\' command')
-      console.log('creating object \'p\'')
-      let p = {}
       p.id = msg.author.id
       if (Japarimon.encountered_mon !== -1) {
         console.log('checking if player exists in local_playersdb')
         if (Japarimon.local_playersdb.find(o => o.id === p.id)) {
           console.info('player exists in local_playersdb')
-          p = Japarimon.local_playersdb[Japarimon.local_playersdb.indexOf(Japarimon.local_playersdb.find(o => o.id === msg.author.id))]
+          p = Japarimon.local_playersdb[Japarimon.local_playersdb.indexOf(Japarimon.local_playersdb.find(o => o.id === p.id))]
           console.log(JSON.stringify(p, null, 4))
           console.log('checking if player already have encountered_mon')
           if (!p.mons.includes(monsdb.indexOf(Japarimon.encountered_mon))) {
@@ -194,10 +193,10 @@ Command.execute = function (msg) {
             Japarimon.local_playersdb[Japarimon.local_playersdb.find(o => o.id === msg.author.id)] = p
             console.info('player\'s data saved!\n', JSON.stringify(Japarimon.local_playersdb, null, 4))
           } else {
-            Japarimon.channel.send(`:exclamation: You already have a **${Japarimon.encountered_mon.name}** **${msg.member.displayName}**, give chance to others!`)
+            Japarimon.channel.send(`:exclamation: **${msg.member.displayName}**, you already have a **${Japarimon.encountered_mon.name}**! give chance to others.`)
           }
         } else {
-          console.info(`player with ID ${p.id} doesn\'t exists in local_playersdb`)
+          console.info(`player with ID ${p.id} doesn't exists in local_playersdb`)
           console.log('pushing encountered_mon to player\'s collection')
           p.mons = []
           p.mons.push(monsdb.indexOf(Japarimon.encountered_mon))
@@ -209,6 +208,52 @@ Command.execute = function (msg) {
       } else {
         console.log('there is no mon to catch')
       }
+      p = {}
+      }
+      break; // catch
+    case config.prefix + 'collection':
+      console.log('executing \'collection\' command')
+      if (msg.content.split(/\s+/)[1] !== undefined) {
+        let param = msg.content.split(/\s+/)[1]
+        console.info(`received parameter '${param}' for command 'collection'`)
+        console.log('checking if a valid parameter')
+        if (msg.mentions.members.first() !== undefined) {
+          let mentioned_name = msg.mentions.members.first().displayName
+          console.info('given parameter is valid')
+          console.log(`checking if ${param} has a collection`)
+          p = Japarimon.local_playersdb[Japarimon.local_playersdb.indexOf(Japarimon.local_playersdb.find(o => o.id === msg.mentions.members.first().id))]
+          if (p !== undefined) {
+            if (p.mons.length > 0) {
+              console.info(`${param} has a collection\n${JSON.stringify(p.mons, null, 4)}`)
+              console.log(`announcing ${param}'s collection`)
+              msg.channel.send(`**${mentioned_name}** has collected ${p.mons.length} Lucky Beast(s)!`)
+            }
+          } else {
+            console.info(`${param} has no collection`)
+            console.log(`informing ${param}`)
+            msg.channel.send(`**${mentioned_name}** haven't collected any Lucky Beasts yet.`)
+          }
+        } else {
+          console.info('given parameter is not a mentioned user, ignoring')
+        }
+      } else {
+        console.info('no parameters received for command \'collection\'')
+        p.id = msg.author.id
+        p = Japarimon.local_playersdb[Japarimon.local_playersdb.indexOf(Japarimon.local_playersdb.find(o => o.id === p.id))]
+        if (p !== undefined) {
+          console.log('checking if player has a collection')
+          if (p.mons.length > 0) {
+            console.info('player has a collection\n', JSON.stringify(p.mons, null, 4))
+            console.log('announcing player\'s collection')
+            msg.channel.send(`**${msg.member.displayName}** has collected **${p.mons.length}** Lucky Beast(s)!`)
+          }
+        } else {
+          console.info('player has no collection')
+          console.log('informing player')
+          msg.channel.send(`You haven't collected any Lucky Beasts yet, **${msg.member.displayName}**.`)
+        }
+      }
+      p = {}
       break;
   }
 }
