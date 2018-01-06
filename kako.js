@@ -31,7 +31,7 @@ console.info('loaded players.json to playersdb:\n', JSON.stringify(playersdb, nu
 let Japarimon = {}
 Japarimon.channels = config.channels
 Japarimon.channel = null
-Japarimon.chance = 0.5 // 0.05 - 5%
+Japarimon.chance = 0.05 // 0.05 - 5%
 Japarimon.state = 0 // 0 - explore, 1 - encounter
 Japarimon.tick = 0 // 1 tick is 30s
 Japarimon.flee_tick = 4 // mons will flee after 2m
