@@ -1,5 +1,5 @@
 {
-  "name": "japarimon",
+  "name": "kako.exe",
   "version": "0.0.1",
   "main": "kako.js",
   "scripts": {
@@ -7,14 +7,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/onlyrida/japarimon.git"
+    "url": "git+https://github.com/onlyrida/kako.exe.git"
   },
   "author": "onlyrida <pudarida@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/onlyrida/japarimon/issues"
+    "url": "https://github.com/onlyrida/kako.exe/issues"
   },
-  "homepage": "https://github.com/onlyrida/japarimon#readme",
+  "homepage": "https://github.com/onlyrida/kako.exe#readme",
   "dependencies": {
     "console-stamp": "^0.2.6",
     "discord.js": "^11.2.1",
